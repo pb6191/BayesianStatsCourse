@@ -1,0 +1,63 @@
+---
+title: "analyze"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+rm(list = ls())
+library(data.table); library(tidyverse); library(correlation)
+library(BayesFactor); library(BFpack); library(ggbeeswarm); library(patchwork); library(ggdist)
+library(hausekeep)
+library(marginaleffects)
+library(lme4)
+library(rethinking)
+theme_set(theme_minimal())
+```
+
+```{r}
+ways <-c(0,3,8,9,0)
+ways/sum(ways) # relative plausibility
+
+dbinom(1,size=2,prob=0.5) # likelihood/prob of getting 6 out of 9 Ws if prob of getting W on each turn is 0.5
+
+# aka prob of observations given p=0.5 model
+
+
+
+```
+
+```{r}
+# definegrid
+p_grid <-seq(from=0,to=1,length.out=200)
+# defineprior
+#prior <-rep(1,20)
+prior <-ifelse(p_grid<0.5,0,1)
+#prior <-exp(-5*abs(p_grid-0.5))
+
+# computelikelihoodateachvalueingrid
+likelihood <-dbinom(1,size=9,prob=p_grid)
+# computeproductoflikelihoodandprior
+unstd.posterior <-likelihood*prior
+# standardizetheposterior,soitsumsto1
+posterior <-unstd.posterior/sum(unstd.posterior)
+
+plot( p_grid,posterior,type="b",
+xlab="probability ofwater",ylab="posteriorprobability")
+mtext( "20points")
+
+```
+
+```{r}
+
+globe.qa <-quap(
+alist(
+W ~dbinom(W+L,p),#binomiallikelihood
+p ~dunif(0,1)#uniformprior
+) ,
+data=list(W=6,L=3) )
+# displaysummaryofquadraticapproximation
+precis( globe.qa)
+
+```

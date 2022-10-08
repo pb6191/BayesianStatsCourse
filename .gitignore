@@ -1,0 +1,6 @@
+.Rproj.user
+*.Rhistory
+**/*Rhistory*
+**/*.Rproj*
+./src/creds.R
+**/creds.R
