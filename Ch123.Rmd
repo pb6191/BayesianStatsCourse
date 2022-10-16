@@ -32,8 +32,8 @@ dbinom(1,size=2,prob=0.5) # likelihood/prob of getting 6 out of 9 Ws if prob of 
 # definegrid
 p_grid <-seq(from=0,to=1,length.out=200)
 # defineprior
-#prior <-rep(1,20)
-prior <-ifelse(p_grid<0.5,0,1)
+prior <-rep(1,20)
+#prior <-ifelse(p_grid<0.5,0,1)
 #prior <-exp(-5*abs(p_grid-0.5))
 
 # computelikelihoodateachvalueingrid
@@ -53,11 +53,103 @@ mtext( "20points")
 
 globe.qa <-quap(
 alist(
-W ~dbinom(W+L,p),#binomiallikelihood
-p ~dunif(0,1)#uniformprior
+W ~dbinom(W+L,p),#binomial likelihood
+p ~dunif(0,1)#uniform prior
 ) ,
 data=list(W=6,L=3) )
+
 # displaysummaryofquadraticapproximation
 precis( globe.qa)
 
 ```
+
+```{r}
+
+# analyticalcalculation
+W <-6
+L <-3
+curve( dbeta(x,W+1,L+1),from=0,to=1) #analytical posterior
+# quadratic approximation
+curve( dnorm(x,0.67,0.16),lty=2,add=TRUE) #quap posterior
+
+```
+
+```{r}
+
+#positive for vamp
+Pr_Positive_Vampire <-0.95
+Pr_Positive_Mortal <-0.01
+Pr_Vampire <-0.001
+Pr_Positive <-Pr_Positive_Vampire*Pr_Vampire+ Pr_Positive_Mortal *(1-Pr_Vampire)
+( Pr_Vampire_Positive<-Pr_Positive_Vampire*Pr_Vampire/Pr_Positive)
+
+```
+
+```{r}
+p_grid <-seq(from=0,to=1,length.out=1000) # models
+
+prob_p <-rep(1,1000) # prob of models
+prob_data <-dbinom(6,size=9,prob=p_grid) # prob of data given the models
+posterior <-prob_data*prob_p
+posterior <-posterior/sum(posterior) # prob of models given the data
+plot(posterior)
+
+for (x in 1:100) {
+  prob_p <-posterior
+  prob_data <-dbinom(6,size=9,prob=p_grid) # should likelihood change per itertion???
+  posterior <-prob_data*prob_p
+  posterior <-posterior/sum(posterior)
+}
+
+plot(posterior)
+
+samples <-sample(p_grid,prob=posterior,size=1e4,replace=TRUE)
+plot(samples)
+dens( samples)
+
+# add up posterior probability where p<0.5
+sum( posterior[p_grid<0.5])
+
+sum( posterior[p_grid>0.6 & p_grid<0.7])
+
+sum( samples<0.5)/1e4
+
+sum( samples>0.6&samples<0.7)/1e4
+
+quantile( samples,0.5) # proportion of samples is the param on the right and it gives out the x coordinate out
+
+# these 2 funcs are same
+quantile(samples,c(0.0,1.0))
+range(samples)
+
+
+
+```
+
+```{r}
+
+p_grid <-seq(from=0,to=1,length.out=1000) # models
+prior <-rep(1,1000) # prob of models
+likelihood <-dbinom(3,size=3,prob=p_grid) # prob of data given the models
+posterior <-likelihood*prior
+posterior <-posterior/sum(posterior) # prob of models given data
+plot(posterior)
+
+samples <-sample(p_grid,size=1e4,replace=TRUE,prob=posterior)
+plot(samples)
+dens(samples)
+
+table(samples)
+
+quantile(samples,c(0.25,.750))
+PI( samples,prob=0.5) # similar to quantile function
+HPDI( samples,prob=0.01) # highest posterior density interval,HPDI. This interval finds the narrowest region with 50% of the posterior probability. Such a regional ways includes the most probable parameter value.
+
+
+```
+
+
+
+
+
+
